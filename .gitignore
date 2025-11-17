@@ -43,6 +43,7 @@ migrate_working_dir/
 # Build folders
 # ---------------------------------------------------
 # Ignore ALL build output except Flutter Web build
+build/**
 !build/web/**
 
 # Coverage
