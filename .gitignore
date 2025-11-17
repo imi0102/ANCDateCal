@@ -7,6 +7,7 @@
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
@@ -42,7 +43,6 @@ migrate_working_dir/
 # Build folders
 # ---------------------------------------------------
 # Ignore ALL build output except Flutter Web build
-build/**
 !build/web/**
 
 # Coverage
