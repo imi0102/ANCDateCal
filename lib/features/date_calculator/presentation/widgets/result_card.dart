@@ -1,16 +1,25 @@
 import 'dart:ui';
+import 'package:anc_date_calculator/core/theme/app_theme.dart';
+import 'package:anc_date_calculator/core/utils/date_calculator.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class ResultCard extends StatelessWidget {
   final String label;
-  final DateTime? date;
+  final DateTime? fromDate;
+  final DateTime? toDate;
 
-  const ResultCard({super.key, required this.label, required this.date});
+  const ResultCard({
+    super.key,
+    required this.label,
+    required this.fromDate,
+    required this.toDate,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final df = DateFormat('dd MMM yyyy');
+    final df = DateFormat('dd/MM/yyyy, EEEE', 'gu_IN');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
@@ -19,9 +28,9 @@ class ResultCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
+            color: isDark
                 ? Colors.white.withOpacity(0.03)
-                : Colors.white.withOpacity(0.9),
+                : Colors.grey.withOpacity(0.05),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -32,33 +41,52 @@ class ResultCard extends StatelessWidget {
             ],
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ICON
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withOpacity(0.12),
+                  color: isDark
+                      ? Colors.white
+                      : AppTheme.primaryColor,
                 ),
-                child: const Icon(Icons.event),
+                child: Icon(
+                  Icons.event,
+                  color: isDark
+                      ? AppTheme.primaryColor
+                      : Colors.white,
+                ),
               ),
+
               const SizedBox(width: 12),
+
+              // CONTENT
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // LABEL
                     Text(
                       label,
                       style: const TextStyle(
-                        fontWeight: FontWeight.normal,
+                        fontWeight: FontWeight.bold,
                         color: Colors.grey,
                       ),
                     ),
+
                     const SizedBox(height: 6),
+
+                    // DATE TEXT
                     Text(
-                      date == null ? '--' : df.format(date!),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      _buildDateText(df),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark
+                            ? Colors.white
+                            : AppTheme.primaryColor,
+                      ),
                     ),
                   ],
                 ),
@@ -68,5 +96,30 @@ class ResultCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// 🔥 Handles:
+  /// - EDD (single date)
+  /// - ANC / PNC (range)
+  /// - Null state
+  String _buildDateText(DateFormat df) {
+    // No date selected
+    if (fromDate == null && toDate == null) {
+      return '--';
+    }
+
+    // ✅ EDD → single date
+    if (fromDate == null && toDate != null) {
+      return df.format(toDate!);
+    }
+
+    // ✅ Range (ANC / PNC)
+    return '${df.format(fromDate!)}\n'
+        '${DateCalculator.centerWordBetween(
+      df.format(fromDate!),
+      df.format(toDate!),
+      'થી',
+    )}\n'
+        '${df.format(toDate!)}';
   }
 }

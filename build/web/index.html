@@ -27,12 +27,42 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.ico"/>
 
   <title>anc_date_calculator</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+<!-- ANDROID APK DOWNLOAD BUTTON (WEB ONLY) -->
+<a
+        id="apk-download-btn"
+        href="app-release.apk"
+        download
+        style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #142B54;
+    color: #DDDCEA;
+    padding: 14px 18px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 10px 25px rgba(0,0,0,.3);
+    z-index: 9999;
+  "
+>
+    ⬇ Download Android App
+</a>
+
+<script>
+    // Show button ONLY on Android browsers
+    if (!/Android/i.test(navigator.userAgent)) {
+      document.getElementById('apk-download-btn').style.display = 'none';
+    }
+</script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

@@ -40,6 +40,7 @@ dependencies:
   printing: ^5.14.2
   path_provider: ^2.1.5
   share_plus: ^12.0.1
+  universal_html: ^2.2.4
 
 dev_dependencies:
   flutter_test:
@@ -69,10 +70,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
+  fonts:
+     - family: NotoSans
+       fonts:
+         - asset: assets/fonts/NotoSansGujarati-Regular.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro

@@ -1,6 +1,6 @@
 {
-    "name": "anc_date_calculator",
-    "short_name": "anc_date_calculator",
+    "name": "ANC PNC Visit Calculator",
+    "short_name": "ANC PNC Visit Calculator",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
