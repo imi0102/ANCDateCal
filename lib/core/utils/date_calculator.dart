@@ -1,14 +1,38 @@
+import 'package:anc_date_calculator/features/date_calculator/domain/entities/date_range.dart';
+import 'package:anc_date_calculator/features/date_calculator/domain/entities/visit_period.dart';
+
 class DateCalculator {
   DateCalculator._();
 
-  //static DateTime calculate(DateTime base, int days) => base.add(Duration(days: days - 1));
+  static DateTime singleDate(DateTime base, int days) =>
+      base.add(Duration(days: days));
 
-  static DateTime startDate(DateTime base, int prevDays) {
-    return base.add(Duration(days: prevDays));
-  }
+  static DateTime startDate(DateTime base, int prevDays) =>
+      base.add(Duration(days: prevDays));
 
-  static DateTime endDate(DateTime base, int days) {
-    return base.add(Duration(days: days - 1));
+  static DateTime endDate(DateTime base, int days) =>
+      base.add(Duration(days: days - 1));
+
+  /// ✅ ONE function for ANC + PNC
+  static DateRange calculateRange({
+    required DateTime base,
+    required List<VisitPeriod> periods,
+    required int index,
+  }) {
+    final period = periods[index];
+
+    // SINGLE DATE (EDD / Registration)
+    if (period.isSingle) {
+      return DateRange(from: singleDate(base, period.toDays!));
+    }
+
+    // RANGE
+   // final prevDays = index == 0 ? 0 : periods[index - 1].days;
+
+    return DateRange(
+      from: startDate(base, period.fromDays!),
+      to: endDate(base, period.toDays!),
+    );
   }
 
   static String centerWordBetween(String top, String bottom, String word) {
@@ -16,5 +40,4 @@ class DateCalculator {
     final pad = ((maxLen - word.length) / 2).floor();
     return ' ' * pad + word;
   }
-
 }

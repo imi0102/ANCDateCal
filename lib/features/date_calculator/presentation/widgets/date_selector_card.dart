@@ -1,23 +1,22 @@
 import 'dart:ui';
-import 'package:anc_date_calculator/core/enum/enums.dart';
 import 'package:anc_date_calculator/core/theme/app_theme.dart';
+import 'package:anc_date_calculator/features/date_calculator/domain/entities/visit_period.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/date_provider.dart';
 import 'package:intl/intl.dart';
-import 'package:shimmer/shimmer.dart';
 
 class DateSelectorCard extends ConsumerWidget {
-  final DateType type;
+  final VisitType visitType;
 
-  const DateSelectorCard({super.key, required this.type});
+  const DateSelectorCard({super.key, required this.visitType});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dateState = ref.watch(dateProvider);
     final df = DateFormat('dd/MM/yyyy, EEEE', 'gu_IN');
 
-    final selectedDate = type == DateType.anc
+    final selectedDate = visitType == VisitType.anc
         ? dateState?.ancDate
         : dateState?.pncDate;
 
@@ -27,7 +26,7 @@ class DateSelectorCard extends ConsumerWidget {
 
         final picked = await showDatePicker(
           context: context,
-          helpText: type == DateType.anc
+          helpText: visitType == VisitType.anc
               ? "LMP તારીખ પસંદ કરો"
               : "ડિલવરી તારીખ પસંદ કરો",
           initialDate: selectedDate ?? DateTime.now(),
@@ -62,7 +61,7 @@ class DateSelectorCard extends ConsumerWidget {
 
         if (picked != null) {
           final notifier = ref.read(dateProvider.notifier);
-          if (type == DateType.anc) {
+          if (visitType == VisitType.anc) {
             notifier.setAncDate(picked);
           } else {
             notifier.setPncDate(picked);
@@ -89,7 +88,7 @@ class DateSelectorCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      type == DateType.anc
+                      visitType == VisitType.anc
                           ? 'LMP તારીખ પસંદ કરો'
                           : 'ડિલવરી તારીખ પસંદ કરો',
                       style: const TextStyle(color: Colors.grey),
@@ -114,7 +113,7 @@ class DateSelectorCard extends ConsumerWidget {
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           final notifier = ref.read(dateProvider.notifier);
-                          if (type == DateType.anc) {
+                          if (visitType == VisitType.anc) {
                             notifier.clearAnc();
                           } else {
                             notifier.clearPnc();

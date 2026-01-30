@@ -1,59 +1,69 @@
-import 'dart:ui';
+import 'package:anc_date_calculator/core/constants/periods.dart';
 import 'package:anc_date_calculator/core/theme/app_theme.dart';
+import 'package:anc_date_calculator/core/utils/date_calculator.dart';
+import 'package:anc_date_calculator/core/utils/pdf_generator.dart';
+import 'package:anc_date_calculator/features/date_calculator/domain/entities/visit_period.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/periods.dart';
 import '../../../../core/services/platform_utils_io.dart';
-import '../../../../core/utils/date_calculator.dart';
-import '../../../../core/utils/pdf_generator.dart';
 
 class ActionButtons extends ConsumerWidget {
-  final DateTime? DeliveryDate;
+  final DateTime? baseDate;
+  final VisitType visitType;
 
-  const ActionButtons(this.DeliveryDate, {super.key});
+  const ActionButtons({
+    super.key,
+    required this.baseDate,
+    required this.visitType,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final df = DateFormat('dd/MM/yyyy, EEEE', 'gu_IN');
     final platform = getPlatformUtils();
+
+    final periods = visitType == VisitType.anc ? ancPeriods : pncPeriods;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        /// ================= COPY =================
         ElevatedButton.icon(
-          onPressed: DeliveryDate == null
+          onPressed: baseDate == null
               ? null
               : () async {
-                  // Copy
-                  final df = DateFormat('dd/MM/yyyy, EEEE', 'gu_IN');
                   final buffer = StringBuffer();
 
-                  buffer.writeln('ડિલવરી તારીખ: ${df.format(DeliveryDate!)}\n');
+                  buffer.writeln(
+                    visitType == VisitType.anc
+                        ? 'LMP તારીખ: ${df.format(baseDate!)}\n'
+                        : 'ડિલિવરી તારીખ: ${df.format(baseDate!)}\n',
+                  );
 
-                  for (int i = 0; i < pncPeriods.length; i++) {
-                    final p = pncPeriods[i];
-
-                    // current period end
-                    final DateTime toDate = DateCalculator.endDate(
-                      DeliveryDate!,
-                      p['days'] as int,
+                  for (int i = 0; i < periods.length; i++) {
+                    final p = periods[i];
+                    final range = DateCalculator.calculateRange(
+                      base: baseDate!,
+                      periods: periods,
+                      index: i,
                     );
 
-                    // previous period end + 1 = current start
-                    final DateTime fromDate = i == 0
-                        ? DeliveryDate!
-                        : DateCalculator.startDate(
-                            DeliveryDate!,
-                            pncPeriods[i - 1]['days'] as int,
-                          ).add(const Duration(days: 1));
+                    buffer.writeln('→ ${p.label}');
+                    buffer.writeln(df.format(range.from));
 
-                    buffer.writeln(
-                        '→ ${p['label']}\n'
-                            '${df.format(fromDate)}\n'
-                            '${DateCalculator.centerWordBetween(df.format(fromDate), df.format(toDate), 'થી')}\n'
-                            '${df.format(toDate)}\n'
+                    if (!range.isSingle) {
+                      buffer.writeln(
+                        DateCalculator.centerWordBetween(
+                          df.format(range.from),
+                          df.format(range.to!),
+                          'થી',
+                        ),
+                      );
+                      buffer.writeln(df.format(range.to!));
+                    }
 
-                    );
+                    buffer.writeln();
                   }
 
                   await platform.copyToClipboard(buffer.toString());
@@ -80,35 +90,42 @@ class ActionButtons extends ConsumerWidget {
           ),
         ),
 
+        /// ================= SHARE =================
         ElevatedButton.icon(
-          onPressed: DeliveryDate == null
+          onPressed: baseDate == null
               ? null
               : () async {
-                  // Share text
-                  final df = DateFormat('dd/MM/yyyy, EEEE', 'gu_IN');
                   final buffer = StringBuffer();
 
-                  buffer.writeln('ડિલવરી તારીખ: ${df.format(DeliveryDate!)}\n');
+                  buffer.writeln(
+                    visitType == VisitType.anc
+                        ? 'LMP તારીખ: ${df.format(baseDate!)}\n'
+                        : 'ડિલિવરી તારીખ: ${df.format(baseDate!)}\n',
+                  );
 
-                  for (int i = 0; i < pncPeriods.length; i++) {
-                    final p = pncPeriods[i];
-                    final prevDays = i == 0 ? 0 : pncPeriods[i - 1]['days'] as int;
-
-                    final fromDate = i == 0
-                        ? DeliveryDate!
-                        : DateCalculator.startDate(DeliveryDate!, prevDays);
-
-                    final toDate = DateCalculator.endDate(
-                      DeliveryDate!,
-                      p['days'] as int,
+                  for (int i = 0; i < periods.length; i++) {
+                    final p = periods[i];
+                    final range = DateCalculator.calculateRange(
+                      base: baseDate!,
+                      periods: periods,
+                      index: i,
                     );
 
-                    buffer.writeln(
-                        '→ ${p['label']}\n'
-                            '${df.format(fromDate)}\n'
-                            '${DateCalculator.centerWordBetween(df.format(fromDate), df.format(toDate), 'થી')}\n'
-                            '${df.format(toDate)}\n'
-                    );
+                    buffer.writeln('→ ${p.label}');
+                    buffer.writeln(df.format(range.from));
+
+                    if (!range.isSingle) {
+                      buffer.writeln(
+                        DateCalculator.centerWordBetween(
+                          df.format(range.from),
+                          df.format(range.to!),
+                          'થી',
+                        ),
+                      );
+                      buffer.writeln(df.format(range.to!));
+                    }
+
+                    buffer.writeln();
                   }
 
                   await platform.shareText(buffer.toString());
@@ -129,34 +146,28 @@ class ActionButtons extends ConsumerWidget {
           ),
         ),
 
+        /// ================= PDF =================
         ElevatedButton.icon(
-          onPressed: DeliveryDate == null
+          onPressed: baseDate == null
               ? null
               : () async {
+                  final periods = visitType == VisitType.anc
+                      ? ancPeriods
+                      : pncPeriods;
+
                   final bytes = await PdfGenerator.makePdfBytes(
-                    DeliveryDate!,
-                    pncPeriods,
-                    (DateTime base, int index) {
-                      final prevDays = index == 0
-                          ? 0
-                          : pncPeriods[index - 1]['days'] as int;
-
-                      final fromDate = index == 0
-                          ? base
-                          : DateCalculator.startDate(base, prevDays);
-
-                      final toDate = DateCalculator.endDate(
-                        base,
-                        pncPeriods[index]['days'] as int,
-                      );
-
-                      return (fromDate, toDate);
-                    },
+                    baseDate!,
+                    periods,
+                    (base, index) => DateCalculator.calculateRange(
+                      base: base,
+                      periods: periods,
+                      index: index,
+                    ),
                   );
 
-                  await platform.savePdfAndShare(
+                  await PdfGenerator.savePdfAndShare(
                     bytes,
-                    'PNC મુલાકાત ની તારીખો_${DeliveryDate!.millisecondsSinceEpoch}.pdf',
+                    '${visitType.name.toUpperCase()}_${baseDate!.millisecondsSinceEpoch}.pdf',
                   );
                 },
           icon: Icon(

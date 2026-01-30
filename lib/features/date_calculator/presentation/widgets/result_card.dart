@@ -82,7 +82,8 @@ class ResultCard extends StatelessWidget {
                     Text(
                       _buildDateText(df),
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                         color: isDark
                             ? Colors.white
                             : AppTheme.primaryColor,
@@ -109,8 +110,8 @@ class ResultCard extends StatelessWidget {
     }
 
     // ✅ EDD → single date
-    if (fromDate == null && toDate != null) {
-      return df.format(toDate!);
+    if (fromDate != null && toDate == null) {
+      return df.format(fromDate!);
     }
 
     // ✅ Range (ANC / PNC)

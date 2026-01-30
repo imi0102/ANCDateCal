@@ -1,1 +1,0 @@
-enum DateType { anc, pnc }

@@ -1,9 +1,9 @@
-import 'package:anc_date_calculator/core/enum/enums.dart';
+import 'package:anc_date_calculator/features/date_calculator/domain/entities/visit_period.dart';
 import 'package:anc_date_calculator/features/date_calculator/states/DateState.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../..//../../core/services/storage_service.dart';
 
-class DateNotifier extends StateNotifier<DateState?> {
+class DateNotifier extends StateNotifier<DateState> {
   final StorageService _storage = StorageService();
 
   DateNotifier()
@@ -11,42 +11,38 @@ class DateNotifier extends StateNotifier<DateState?> {
         const DateState(
           ancDate: null,
           pncDate: null,
-          dateType: DateType.pnc,
+          visitType: VisitType.pnc,
           loaded: false,
         ),
       ) {
-    _loadPnc();
-    _loadAnc();
+    _loadInitial();
   }
 
-  Future<void> _loadPnc() async {
-    final d = await _storage.loadPncDate();
-    state = DateState(pncDate: d, loaded: true, dateType: DateType.pnc);
-  }
+  Future<void> _loadInitial() async {
+    final anc = await _storage.loadAncDate();
+    final pnc = await _storage.loadPncDate();
 
-  Future<void> setPncDate(DateTime date) async {
-    state = state?.copyWith(pncDate: date);
-    await _storage.savePncDate(date);
-  }
-
-  Future<void> clearPnc() async {
-    state = state?.copyWith(pncDate: null);
-    await _storage.clearPnc();
-  }
-
-  Future<void> _loadAnc() async {
-    final d = await _storage.loadAncDate();
-    state = DateState(ancDate: d, loaded: true, dateType: DateType.anc);
+    state = state.copyWith(ancDate: anc, pncDate: pnc, loaded: true);
   }
 
   Future<void> setAncDate(DateTime date) async {
-    state = state?.copyWith(ancDate: date);
+    state = state.copyWith(ancDate: date, visitType: VisitType.anc);
     await _storage.saveAncDate(date);
   }
 
+  Future<void> setPncDate(DateTime date) async {
+    state = state.copyWith(pncDate: date, visitType: VisitType.pnc);
+    await _storage.savePncDate(date);
+  }
+
   Future<void> clearAnc() async {
-    state = state?.copyWith(ancDate: null);
+    state = state.copyWith(ancDate: null);
     await _storage.clearAnc();
+  }
+
+  Future<void> clearPnc() async {
+    state = state.copyWith(pncDate: null);
+    await _storage.clearPnc();
   }
 }
 

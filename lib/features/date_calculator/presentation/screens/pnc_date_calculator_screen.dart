@@ -1,5 +1,4 @@
-import 'package:anc_date_calculator/core/enum/enums.dart';
-import 'package:anc_date_calculator/features/date_calculator/providers/theme_provider.dart';
+import 'package:anc_date_calculator/features/date_calculator/domain/entities/visit_period.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/periods.dart';
@@ -21,44 +20,35 @@ class PNCDateCalculatorScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const DateSelectorCard(type: DateType.pnc,),
+            const DateSelectorCard(visitType: VisitType.pnc),
             const SizedBox(height: 14),
-            ActionButtons(dateState?.pncDate),
+            ActionButtons(
+              baseDate: dateState?.pncDate,
+              visitType: VisitType.pnc,
+            ),
             const SizedBox(height: 14),
             Expanded(
               child: ListView.separated(
                 itemCount: pncPeriods.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
-                  final p = pncPeriods[index];
-
-                  final DateTime? fromDate;
-                  final DateTime? toDate;
-
-                  if (dateState?.pncDate == null) {
-                    fromDate = null;
-                    toDate = null;
-                  } else {
-                    final base = dateState!.pncDate!;
-                    final prevDays = index == 0
-                        ? 0
-                        : pncPeriods[index - 1]['days'] as int;
-
-                    fromDate = index == 0
-                        ? base
-                        : DateCalculator.startDate(base, prevDays);
-
-                    toDate = DateCalculator.endDate(base, p['days'] as int);
-                  }
+                  final range = dateState?.pncDate == null
+                      ? null
+                      : DateCalculator.calculateRange(
+                    base: dateState!.pncDate!,
+                    periods: pncPeriods,
+                    index: index,
+                  );
 
                   return ResultCard(
-                    label: p['label'].toString(),
-                    fromDate: fromDate,
-                    toDate: toDate,
+                    label: pncPeriods[index].label,
+                    fromDate: range?.from,
+                    toDate: range?.to,
                   );
                 },
               ),
             ),
+
           ],
         ),
       ),
