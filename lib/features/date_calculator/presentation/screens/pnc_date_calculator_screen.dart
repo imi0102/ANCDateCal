@@ -1,4 +1,6 @@
+import 'package:anc_date_calculator/core/ads/ad_ids.dart';
 import 'package:anc_date_calculator/features/date_calculator/domain/entities/visit_period.dart';
+import 'package:anc_date_calculator/features/date_calculator/presentation/widgets/banner_ad_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/periods.dart';
@@ -22,6 +24,12 @@ class PNCDateCalculatorScreen extends ConsumerWidget {
           children: [
             const DateSelectorCard(visitType: VisitType.pnc),
             const SizedBox(height: 14),
+
+            // BannerAdWidget(
+            //   adUnitId: AdIds.bannerPncAdUnitId,
+            //   visitType: VisitType.pnc,
+            // ),
+
             ActionButtons(
               baseDate: dateState?.pncDate,
               visitType: VisitType.pnc,
@@ -35,10 +43,11 @@ class PNCDateCalculatorScreen extends ConsumerWidget {
                   final range = dateState?.pncDate == null
                       ? null
                       : DateCalculator.calculateRange(
-                    base: dateState!.pncDate!,
-                    periods: pncPeriods,
-                    index: index,
-                  );
+                          base: dateState!.pncDate!,
+                          periods: pncPeriods,
+                          index: index,
+                          visitType: VisitType.pnc,
+                        );
 
                   return ResultCard(
                     label: pncPeriods[index].label,
@@ -48,7 +57,6 @@ class PNCDateCalculatorScreen extends ConsumerWidget {
                 },
               ),
             ),
-
           ],
         ),
       ),

@@ -13,6 +13,7 @@ class DateSelectorCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final dateState = ref.watch(dateProvider);
     final df = DateFormat('dd/MM/yyyy, EEEE', 'gu_IN');
 
@@ -22,8 +23,6 @@ class DateSelectorCard extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () async {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
         final picked = await showDatePicker(
           context: context,
           helpText: visitType == VisitType.anc
@@ -76,10 +75,16 @@ class DateSelectorCard extends ConsumerWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
+              color: isDark
                   ? Colors.white.withOpacity(0.06)
                   : Colors.white.withOpacity(0.8),
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.4)
+                    : Colors.black.withOpacity(0.15),
+                width: 1,
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

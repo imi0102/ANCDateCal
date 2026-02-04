@@ -59,7 +59,7 @@ const List<VisitPeriod> ancPeriods = [
   VisitPeriod(
     label: 'પ્રથમ ANC મુલાકાત (12 અઠવાડિયા)',
     //days: 90,
-    fromDays: 7,
+    fromDays: 0,
     toDays: 90,
   ),
   VisitPeriod(

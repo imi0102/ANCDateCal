@@ -5,6 +5,10 @@ class Utility {
 
   static void downloadApkWeb() {
     if (!kIsWeb) return;
-    html.window.open('app-release.apk', '_blank');
+
+    html.window.open(
+      '/assets/apk/app-release.apk',
+      '_blank',
+    );
   }
 }

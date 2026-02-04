@@ -13,11 +13,15 @@ class DateCalculator {
   static DateTime endDate(DateTime base, int days) =>
       base.add(Duration(days: days - 1));
 
+  static DateTime ancEndDate(DateTime base, int days) =>
+      base.add(Duration(days: days));
+
   /// ✅ ONE function for ANC + PNC
   static DateRange calculateRange({
     required DateTime base,
     required List<VisitPeriod> periods,
     required int index,
+    required VisitType visitType,
   }) {
     final period = periods[index];
 
@@ -27,11 +31,13 @@ class DateCalculator {
     }
 
     // RANGE
-   // final prevDays = index == 0 ? 0 : periods[index - 1].days;
+    // final prevDays = index == 0 ? 0 : periods[index - 1].days;
 
     return DateRange(
       from: startDate(base, period.fromDays!),
-      to: endDate(base, period.toDays!),
+      to: visitType == VisitType.anc
+          ? ancEndDate(base, period.toDays!)
+          : endDate(base, period.toDays!),
     );
   }
 
