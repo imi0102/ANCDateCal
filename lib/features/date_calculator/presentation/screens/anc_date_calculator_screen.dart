@@ -20,6 +20,60 @@ class ANCDateCalculatorScreen extends ConsumerWidget {
     final dateState = ref.watch(dateProvider);
 
     return Scaffold(
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const DateSelectorCard(
+              visitType: VisitType.anc,
+            ),
+
+            const SizedBox(height: 14),
+
+            BannerAdWidget(
+              adUnitId: AdIds.bannerAncAdUnitId,
+              visitType: VisitType.anc,
+            ),
+
+            const SizedBox(height: 14),
+
+            ActionButtons(
+              baseDate: dateState?.ancDate,
+              visitType: VisitType.anc,
+            ),
+
+            const SizedBox(height: 14),
+
+            ...List.generate(
+              ancPeriods.length,
+                  (index) {
+                final range = dateState?.ancDate == null
+                    ? null
+                    : DateCalculator.calculateRange(
+                  base: dateState!.ancDate!,
+                  periods: ancPeriods,
+                  index: index,
+                  visitType: VisitType.anc,
+                );
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == ancPeriods.length - 1 ? 0 : 12,
+                  ),
+                  child: ResultCard(
+                    label: ancPeriods[index].label,
+                    fromDate: range?.from,
+                    toDate: range?.to,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    /*return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -28,10 +82,10 @@ class ANCDateCalculatorScreen extends ConsumerWidget {
 
             const SizedBox(height: 14),
 
-            // BannerAdWidget(
-            //   adUnitId: AdIds.bannerAncAdUnitId,
-            //   visitType: VisitType.anc,
-            // ),
+            BannerAdWidget(
+              adUnitId: AdIds.bannerAncAdUnitId,
+              visitType: VisitType.anc,
+            ),
 
             ActionButtons(
               baseDate: dateState?.ancDate,
@@ -64,6 +118,6 @@ class ANCDateCalculatorScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    );*/
   }
 }

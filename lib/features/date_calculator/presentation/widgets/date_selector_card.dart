@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'package:anc_date_calculator/core/ads/ad_gate_service.dart';
+import 'package:anc_date_calculator/core/ads/ad_ids.dart';
 import 'package:anc_date_calculator/core/theme/app_theme.dart';
 import 'package:anc_date_calculator/features/date_calculator/domain/entities/visit_period.dart';
 import 'package:flutter/material.dart';
@@ -58,14 +60,34 @@ class DateSelectorCard extends ConsumerWidget {
           },
         );
 
-        if (picked != null) {
+        /*if (picked != null) {
           final notifier = ref.read(dateProvider.notifier);
           if (visitType == VisitType.anc) {
             notifier.setAncDate(picked);
           } else {
             notifier.setPncDate(picked);
           }
+        }*/
+        // User cancelled
+        if (picked == null) {
+          return;
         }
+
+        // Global AdGate
+        await ref.read(adGateProvider).run(
+          adId: AdIds.dateSelectionRewardUnitId,
+          action: () async{
+            if (visitType == VisitType.anc) {
+              ref
+                  .read(dateProvider.notifier)
+                  .setAncDate(picked);
+            } else {
+              ref
+                  .read(dateProvider.notifier)
+                  .setPncDate(picked);
+            }
+          },
+        );
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),

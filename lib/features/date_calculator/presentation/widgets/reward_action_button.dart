@@ -1,3 +1,5 @@
+import 'package:anc_date_calculator/core/ads/ad_gate_service.dart';
+import 'package:anc_date_calculator/core/ads/ad_ids.dart';
 import 'package:anc_date_calculator/core/ads/rewarded_ad_provider.dart';
 import 'package:anc_date_calculator/core/theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
@@ -24,15 +26,25 @@ class RewardActionButton extends ConsumerWidget {
       onPressed: !enabled
           ? null
           : () async {
-              /*final rewarded = await ref
+              if (context.mounted) {
+                await ref
+                    .read(adGateProvider)
+                    .run(
+                      adId: AdIds.actionButtonRewardUnitId,
+                      action: onRewardedAction,
+                    );
+              }
+              /*
+              final rewarded = await ref
                   .read(rewardedAdProvider.notifier)
                   .show();
 
               if (kIsWeb || (rewarded && context.mounted)) {
                 await onRewardedAction();
-              }*/
+              }
+*/
 
-              await onRewardedAction();
+              // await onRewardedAction();
             },
       icon: Icon(
         icon,

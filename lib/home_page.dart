@@ -148,11 +148,11 @@ class _HomePageState extends ConsumerState<HomePage>
       setState(() {}); // Rebuild to update AppBar title
     });
     // 🔥 Preload rewarded ad immediately
-    // if (!kIsWeb) {
-    //   Future.microtask(() {
-    //     ref.read(rewardedAdProvider.notifier);
-    //   });
-    // }
+    if (!kIsWeb) {
+      Future.microtask(() {
+        ref.read(rewardedAdProvider.notifier);
+      });
+    }
   }
 
   @override
