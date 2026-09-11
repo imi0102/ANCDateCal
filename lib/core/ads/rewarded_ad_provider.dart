@@ -1,111 +1,326 @@
-import 'dart:io';
+import 'dart:async';
 
+import 'package:anc_date_calculator/core/services/remote_config_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 final rewardedAdProvider =
-StateNotifierProvider<RewardedAdNotifier, RewardedAdState>(
+StateNotifierProvider<
+    RewardedAdNotifier,
+    RewardedAdState>(
       (ref) => RewardedAdNotifier(),
 );
 
-class RewardedAdState {
-  final RewardedAd? ad;
-  final bool isLoading;
-  final String? adId;
+// =============================================================================
+// STATUS
+// =============================================================================
 
-  const RewardedAdState({
+enum RewardedAdStatus {
+  idle,
+  loading,
+  ready,
+  failed,
+}
+
+// =============================================================================
+// AD ITEM
+// =============================================================================
+
+class RewardedAdItem {
+  final RewardedAd? ad;
+  final RewardedAdStatus status;
+
+  const RewardedAdItem({
     this.ad,
-    this.isLoading = false,
-    this.adId,
+    this.status = RewardedAdStatus.idle,
   });
 
-  bool get isReady => ad != null;
+  bool get isReady =>
+      ad != null &&
+          status == RewardedAdStatus.ready;
+
+  bool get isLoading =>
+      status == RewardedAdStatus.loading;
+
+  bool get isFailed =>
+      status == RewardedAdStatus.failed;
 }
+
+// =============================================================================
+// STATE
+// =============================================================================
+
+class RewardedAdState {
+  final Map<String, RewardedAdItem> ads;
+
+  const RewardedAdState({
+    this.ads = const {},
+  });
+
+  RewardedAdItem getAd(String adId) {
+    return ads[adId] ??
+        const RewardedAdItem();
+  }
+
+  RewardedAdState copyWithAd(
+      String adId,
+      RewardedAdItem item,
+      ) {
+    final newAds =
+    Map<String, RewardedAdItem>.from(
+      ads,
+    );
+
+    newAds[adId] = item;
+
+    return RewardedAdState(
+      ads: newAds,
+    );
+  }
+
+  RewardedAdState removeAd(
+      String adId,
+      ) {
+    final newAds =
+    Map<String, RewardedAdItem>.from(
+      ads,
+    );
+
+    newAds.remove(adId);
+
+    return RewardedAdState(
+      ads: newAds,
+    );
+  }
+}
+
+// =============================================================================
+// NOTIFIER
+// =============================================================================
 
 class RewardedAdNotifier
     extends StateNotifier<RewardedAdState> {
   RewardedAdNotifier()
-      : super(const RewardedAdState());
+      : super(
+    const RewardedAdState(),
+  );
+
+  final Set<String> _loadingIds = {};
+
+  /// Used to ignore old callbacks if another load
+  /// for the same ad ID has already started.
+  final Map<String, int> _loadGeneration = {};
 
   bool _isShowing = false;
-  String? _loadingAdId;
 
-  // ------------------------------------------------------------
-  // LOAD AD
-  // ------------------------------------------------------------
+  // ===========================================================================
+  // PLATFORM CHECK
+  // ===========================================================================
 
-  void _load(String adId) {
-    if (kIsWeb) return;
+  bool get _isSupportedPlatform {
+    if (kIsWeb) {
+      return false;
+    }
 
-    if (!Platform.isAndroid && !Platform.isIOS) {
+    return defaultTargetPlatform ==
+        TargetPlatform.android ||
+        defaultTargetPlatform ==
+            TargetPlatform.iOS;
+  }
+
+  // ===========================================================================
+  // REMOTE CONFIG CHECK
+  // ===========================================================================
+
+  bool get _isRewardedAdEnabled {
+    return RemoteConfigService
+        .instance
+        .enableRewardedAds;
+  }
+
+  // ===========================================================================
+  // LOAD
+  // ===========================================================================
+
+  void load({
+    required String adId,
+  }) {
+    // -------------------------------------------------------------------------
+    // REMOTE CONFIG
+    // -------------------------------------------------------------------------
+
+    if (!_isRewardedAdEnabled) {
+      debugPrint(
+        'RewardedAd → Disabled by Remote Config → '
+            'Skip loading',
+      );
+
       return;
     }
+
+    // -------------------------------------------------------------------------
+    // PLATFORM
+    // -------------------------------------------------------------------------
+
+    if (!_isSupportedPlatform) {
+      debugPrint(
+        'RewardedAd → Unsupported platform',
+      );
+
+      return;
+    }
+
+    // -------------------------------------------------------------------------
+    // AD ID
+    // -------------------------------------------------------------------------
 
     if (adId.isEmpty) {
+      debugPrint(
+        'RewardedAd → Empty ad ID',
+      );
+
       return;
     }
 
-    // Already loading same ad.
-    if (state.isLoading && _loadingAdId == adId) {
+    // -------------------------------------------------------------------------
+    // ALREADY LOADING
+    // -------------------------------------------------------------------------
+
+    if (_loadingIds.contains(adId)) {
+      debugPrint(
+        'RewardedAd → Already loading → $adId',
+      );
+
       return;
     }
 
-    // Already have the requested ad.
-    if (state.isReady && state.adId == adId) {
+    final currentItem =
+    state.getAd(adId);
+
+    // -------------------------------------------------------------------------
+    // ALREADY READY
+    // -------------------------------------------------------------------------
+
+    if (currentItem.isReady) {
+      debugPrint(
+        'RewardedAd → Already ready → $adId',
+      );
+
       return;
     }
 
-    // If another ad ID is loaded, dispose it.
-    if (state.ad != null && state.adId != adId) {
-      state.ad?.dispose();
-      state = const RewardedAdState();
-    }
+    // -------------------------------------------------------------------------
+    // DISPOSE OLD AD
+    // -------------------------------------------------------------------------
 
-    // Don't load another ad while showing.
-    if (_isShowing) {
-      return;
-    }
+    currentItem.ad?.dispose();
 
-    _loadingAdId = adId;
+    _loadingIds.add(adId);
 
-    state = RewardedAdState(
-      isLoading: true,
-      adId: adId,
+    // -------------------------------------------------------------------------
+    // GENERATION
+    // -------------------------------------------------------------------------
+
+    final generation =
+        (_loadGeneration[adId] ?? 0) + 1;
+
+    _loadGeneration[adId] =
+        generation;
+
+    // -------------------------------------------------------------------------
+    // LOADING STATE
+    // -------------------------------------------------------------------------
+
+    state = state.copyWithAd(
+      adId,
+      const RewardedAdItem(
+        status: RewardedAdStatus.loading,
+      ),
     );
 
     debugPrint(
       'RewardedAd → Loading → $adId',
     );
 
+    // -------------------------------------------------------------------------
+    // LOAD
+    // -------------------------------------------------------------------------
+
     RewardedAd.load(
       adUnitId: adId,
       request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
+      rewardedAdLoadCallback:
+      RewardedAdLoadCallback(
         onAdLoaded: (ad) {
-          // Ignore old/stale load callbacks.
-          if (_loadingAdId != adId) {
+          final isLatest =
+              _loadGeneration[adId] ==
+                  generation;
+
+          if (!isLatest) {
+            debugPrint(
+              'RewardedAd → Old callback ignored → '
+                  '$adId',
+            );
+
             ad.dispose();
             return;
           }
 
-          state = RewardedAdState(
-            ad: ad,
-            adId: adId,
+          _loadingIds.remove(adId);
+
+          // -------------------------------------------------------------------
+          // REMOTE CONFIG MAY HAVE CHANGED WHILE LOADING
+          // -------------------------------------------------------------------
+
+          if (!_isRewardedAdEnabled) {
+            debugPrint(
+              'RewardedAd → Disabled after loading → '
+                  'Dispose ad',
+            );
+
+            ad.dispose();
+
+            state = state.copyWithAd(
+              adId,
+              const RewardedAdItem(
+                status: RewardedAdStatus.idle,
+              ),
+            );
+
+            return;
+          }
+
+          state = state.copyWithAd(
+            adId,
+            RewardedAdItem(
+              ad: ad,
+              status: RewardedAdStatus.ready,
+            ),
           );
 
           debugPrint(
             'RewardedAd → Loaded → $adId',
           );
         },
+
         onAdFailedToLoad: (error) {
-          if (_loadingAdId != adId) {
+          final isLatest =
+              _loadGeneration[adId] ==
+                  generation;
+
+          if (!isLatest) {
             return;
           }
 
-          state = const RewardedAdState();
+          _loadingIds.remove(adId);
 
-          _loadingAdId = null;
+          state = state.copyWithAd(
+            adId,
+            const RewardedAdItem(
+              status: RewardedAdStatus.failed,
+            ),
+          );
 
           debugPrint(
             'RewardedAd → Failed → $adId',
@@ -119,26 +334,46 @@ class RewardedAdNotifier
     );
   }
 
-  // ------------------------------------------------------------
-  // SHOW AD
-  // ------------------------------------------------------------
+  // ===========================================================================
+  // SHOW READY AD
+  // ===========================================================================
 
-  Future<bool> show({
+  Future<bool> showReady({
     required String adId,
   }) async {
-    if (kIsWeb) {
+    // -------------------------------------------------------------------------
+    // REMOTE CONFIG
+    // -------------------------------------------------------------------------
+
+    if (!_isRewardedAdEnabled) {
+      debugPrint(
+        'RewardedAd → Disabled by Remote Config → '
+            'Do not show',
+      );
+
       return false;
     }
 
-    if (!Platform.isAndroid && !Platform.isIOS) {
+    // -------------------------------------------------------------------------
+    // PLATFORM
+    // -------------------------------------------------------------------------
+
+    if (!_isSupportedPlatform) {
       return false;
     }
+
+    // -------------------------------------------------------------------------
+    // AD ID
+    // -------------------------------------------------------------------------
 
     if (adId.isEmpty) {
       return false;
     }
 
-    // Another ad is already showing.
+    // -------------------------------------------------------------------------
+    // ALREADY SHOWING
+    // -------------------------------------------------------------------------
+
     if (_isShowing) {
       debugPrint(
         'RewardedAd → Already showing',
@@ -147,89 +382,159 @@ class RewardedAdNotifier
       return false;
     }
 
-    // No ad loaded.
-    if (!state.isReady) {
-      debugPrint(
-        'RewardedAd → Not ready → $adId',
-      );
+    // -------------------------------------------------------------------------
+    // GET AD
+    // -------------------------------------------------------------------------
 
-      // Start loading requested ID.
-      _load(adId);
+    final item =
+    state.getAd(adId);
+
+    if (!item.isReady) {
+      debugPrint(
+        'RewardedAd → Ad is not ready → '
+            '$adId',
+      );
 
       return false;
     }
 
-    // Loaded ad belongs to another ID.
-    if (state.adId != adId) {
-      debugPrint(
-        'RewardedAd → Ad ID mismatch',
-      );
+    final ad = item.ad!;
 
-      state.ad?.dispose();
+    // -------------------------------------------------------------------------
+    // REMOVE READY AD BEFORE SHOWING
+    // -------------------------------------------------------------------------
 
-      state = const RewardedAdState();
-
-      _loadingAdId = null;
-
-      _load(adId);
-
-      return false;
-    }
-
-    final ad = state.ad!;
-
-    // Remove from state immediately.
-    state = const RewardedAdState();
+    state = state.copyWithAd(
+      adId,
+      const RewardedAdItem(
+        status: RewardedAdStatus.idle,
+      ),
+    );
 
     _isShowing = true;
-    _loadingAdId = null;
 
-    bool rewarded = false;
+    final completer =
+    Completer<bool>();
+
+    bool rewardEarned = false;
+
+    debugPrint(
+      'RewardedAd → Showing → $adId',
+    );
+
+    // -------------------------------------------------------------------------
+    // CALLBACKS
+    // -------------------------------------------------------------------------
+
+    ad.fullScreenContentCallback =
+        FullScreenContentCallback(
+          onAdShowedFullScreenContent:
+              (ad) {
+            debugPrint(
+              'RewardedAd → Full screen shown → '
+                  '$adId',
+            );
+          },
+
+          onAdDismissedFullScreenContent:
+              (ad) {
+            debugPrint(
+              'RewardedAd → Dismissed → '
+                  '$adId',
+            );
+
+            ad.dispose();
+
+            _isShowing = false;
+
+            if (!completer.isCompleted) {
+              completer.complete(
+                rewardEarned,
+              );
+            }
+          },
+
+          onAdFailedToShowFullScreenContent:
+              (ad, error) {
+            debugPrint(
+              'RewardedAd → Failed to show → '
+                  '$adId',
+            );
+
+            debugPrint(
+              'RewardedAd → Error → $error',
+            );
+
+            ad.dispose();
+
+            _isShowing = false;
+
+            if (!completer.isCompleted) {
+              completer.complete(false);
+            }
+          },
+
+          onAdImpression: (ad) {
+            debugPrint(
+              'RewardedAd → Impression → '
+                  '$adId',
+            );
+          },
+
+          onAdClicked: (ad) {
+            debugPrint(
+              'RewardedAd → Clicked → '
+                  '$adId',
+            );
+          },
+        );
+
+    // -------------------------------------------------------------------------
+    // SHOW
+    // -------------------------------------------------------------------------
 
     try {
-      await ad.show(
-        onUserEarnedReward: (_, reward) {
-          rewarded = true;
+      ad.show(
+        onUserEarnedReward:
+            (
+            AdWithoutView ad,
+            RewardItem reward,
+            ) {
+          rewardEarned = true;
 
           debugPrint(
             'RewardedAd → Reward earned → '
-                '${reward.amount} ${reward.type}',
+                '${reward.amount} '
+                '${reward.type}',
           );
         },
       );
     } catch (e) {
       debugPrint(
-        'RewardedAd → Show error → $e',
+        'RewardedAd → Show exception → $e',
       );
-    } finally {
+
       ad.dispose();
 
       _isShowing = false;
 
-      // Preload next ad using SAME ID.
-      _load(adId);
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
     }
 
-    return rewarded;
+    return completer.future;
   }
 
-  // ------------------------------------------------------------
-  // PRELOAD
-  // ------------------------------------------------------------
-
-  void preload({
-    required String adId,
-  }) {
-    _load(adId);
-  }
-
-  // ------------------------------------------------------------
+  // ===========================================================================
   // DISPOSE
-  // ------------------------------------------------------------
+  // ===========================================================================
 
   @override
   void dispose() {
-    state.ad?.dispose();
+    for (final item in state.ads.values) {
+      item.ad?.dispose();
+    }
 
     super.dispose();
   }

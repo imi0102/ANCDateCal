@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class AdIds {
-  static bool releaseMode = !kReleaseMode;
+  static bool releaseMode = kReleaseMode;
 
   static String testAdmobAndroidAppId =
       "ca-app-pub-4331629068974197~2032697395";
@@ -71,11 +71,23 @@ class AdIds {
             ? "" // Apple Live Id
             : rewarded)
       : "";
-  static String actionButtonRewardUnitId = kIsWeb
+  static String rewardedAncAdUnitId = kIsWeb
       ? ''
       : Platform.isAndroid
       ? (releaseMode
             ? "ca-app-pub-6994441308833711/9813410790" // Live Android Id
+            : rewarded) // Test Android ID
+      : Platform.isIOS
+      ? (releaseMode
+            ? "" // Apple Live Id
+            : rewarded)
+      : "";
+
+  static String rewardedPncAdUnitId = kIsWeb
+      ? ''
+      : Platform.isAndroid
+      ? (releaseMode
+            ? "ca-app-pub-6994441308833711/1993136268" // Live Android Id
             : rewarded) // Test Android ID
       : Platform.isIOS
       ? (releaseMode

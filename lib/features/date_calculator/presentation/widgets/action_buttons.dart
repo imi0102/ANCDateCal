@@ -34,6 +34,7 @@ class ActionButtons extends ConsumerWidget {
           icon: Icons.copy_all,
           label: 'કોપી',
           enabled: baseDate != null,
+          visitType: visitType,
           onRewardedAction: () async {
             final buffer = StringBuffer();
 
@@ -84,6 +85,7 @@ class ActionButtons extends ConsumerWidget {
           label: 'શેર',
           icon: Icons.share,
           enabled: baseDate != null,
+          visitType: visitType,
           onRewardedAction: () async {
             final buffer = StringBuffer();
 
@@ -128,6 +130,7 @@ class ActionButtons extends ConsumerWidget {
           icon: Icons.picture_as_pdf,
           label: 'એક્સપોર્ટ PDF',
           enabled: baseDate != null,
+          visitType: visitType,
           onRewardedAction: () async {
             final periods = visitType == VisitType.anc
                 ? ancPeriods

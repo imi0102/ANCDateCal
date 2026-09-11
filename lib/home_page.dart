@@ -112,7 +112,10 @@ class _HomePageState extends ConsumerState<HomePage>
 import 'dart:ui' as html;
 
 import 'package:anc_date_calculator/core/ads/rewarded_ad_provider.dart';
+import 'package:anc_date_calculator/core/services/force_update_service.dart';
+import 'package:anc_date_calculator/core/services/remote_config_service.dart';
 import 'package:anc_date_calculator/core/utils/utility.dart';
+import 'package:anc_date_calculator/features/date_calculator/presentation/widgets/force_update_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -152,9 +155,32 @@ class _HomePageState extends ConsumerState<HomePage>
       Future.microtask(() {
         ref.read(rewardedAdProvider.notifier);
       });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkForceUpdate();
+      });
     }
   }
 
+  Future<void> _checkForceUpdate() async {
+    final shouldUpdate =
+    await ForceUpdateService
+        .shouldForceUpdate();
+
+    if (!mounted || !shouldUpdate) {
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return ForceUpdateDialog(
+          onUpdate: Utility.openPlayStore,
+        );
+      },
+    );
+  }
   @override
   void dispose() {
     _tabController.dispose();
@@ -164,7 +190,9 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Widget build(BuildContext context) {
     final mode = ref.watch(themeControllerProvider);
-    final systemBrightness = MediaQuery.of(context).platformBrightness;
+    final systemBrightness = MediaQuery
+        .of(context)
+        .platformBrightness;
 
     return Scaffold(
       appBar: AppBar(
@@ -174,15 +202,16 @@ class _HomePageState extends ConsumerState<HomePage>
             icon: Icon(
               mode == ThemeMode.system
                   ? (systemBrightness == Brightness.dark
-                        ? Icons.dark_mode_sharp
-                        : Icons.light_mode_sharp)
+                  ? Icons.dark_mode_sharp
+                  : Icons.light_mode_sharp)
                   : mode == ThemeMode.dark
                   ? Icons.dark_mode_sharp
                   : Icons.light_mode_sharp,
             ),
-            onPressed: () => ref
-                .read(themeControllerProvider.notifier)
-                .toggle(systemBrightness),
+            onPressed: () =>
+                ref
+                    .read(themeControllerProvider.notifier)
+                    .toggle(systemBrightness),
             tooltip: 'Change Theme',
           ),
 
@@ -195,12 +224,17 @@ class _HomePageState extends ConsumerState<HomePage>
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Theme.of(context).colorScheme.secondary,
+          indicatorColor: Theme
+              .of(context)
+              .colorScheme
+              .secondary,
           labelColor: Colors.white,
           // active tab text/icon
           unselectedLabelColor: Colors.white60,
           // inactive tab text/icon
-          dividerColor: Theme.of(context).brightness == Brightness.dark
+          dividerColor: Theme
+              .of(context)
+              .brightness == Brightness.dark
               ? Colors.white60
               : Colors.black54,
           tabs: const [

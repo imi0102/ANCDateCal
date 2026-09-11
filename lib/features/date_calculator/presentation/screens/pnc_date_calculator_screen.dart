@@ -70,7 +70,9 @@ class PNCDateCalculatorScreen extends ConsumerWidget {
         ),
       ),
     );
-    
+  }
+}
+
 /*
     return Scaffold(
       body: Padding(
@@ -116,5 +118,3 @@ class PNCDateCalculatorScreen extends ConsumerWidget {
       ),
     );
 */
-  }
-}

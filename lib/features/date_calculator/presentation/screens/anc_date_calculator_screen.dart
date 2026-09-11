@@ -1,3 +1,4 @@
+import 'package:anc_date_calculator/core/ads/ad_gate_service.dart';
 import 'package:anc_date_calculator/core/ads/ad_ids.dart';
 import 'package:anc_date_calculator/core/constants/periods.dart';
 import 'package:anc_date_calculator/core/utils/date_calculator.dart';
@@ -68,12 +69,43 @@ class ANCDateCalculatorScreen extends ConsumerWidget {
                 );
               },
             ),
+        /*    Column(
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    await ref
+                        .read(adGateProvider)
+                        .resetAllForTesting();
+                  },
+                  child: const Text('Reset Ad Gate'),
+                ),
+
+                ElevatedButton(
+                  onPressed: () async {
+                    await ref
+                        .read(adGateProvider)
+                        .expireTrialForTesting();
+                  },
+                  child: const Text('Expire Trial'),
+                ),
+
+                ElevatedButton(
+                  onPressed: () async {
+                    await ref
+                        .read(adGateProvider)
+                        .resetForTesting();
+                  },
+                  child: const Text('Reset Daily Usage'),
+                ),
+              ],
+            )*/
           ],
         ),
       ),
     );
-
-    /*return Scaffold(
+  }
+}
+/*return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -119,5 +151,3 @@ class ANCDateCalculatorScreen extends ConsumerWidget {
         ),
       ),
     );*/
-  }
-}

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "391297390970",
+    "project_id": "anc-pnc-viste-calculation",
+    "storage_bucket": "anc-pnc-viste-calculation.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:391297390970:android:925c7b8d39c34843af5ec3",
+        "android_client_info": {
+          "package_name": "com.app.anc_date_calculator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA836feVxV3fRKcpcZNbFFoadKxNUUJmjU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
